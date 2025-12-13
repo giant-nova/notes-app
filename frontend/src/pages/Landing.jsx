@@ -1,13 +1,35 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import AuthModal from '../components/AuthModal'; // Import the new modal
+import { Toaster } from 'react-hot-toast'; // Import toaster for landing page errors
 import '../App.css';
 
 function Landing() {
+    const [isModalOpen, setModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState('login'); // 'login' or 'register'
+
+    const openModal = (mode) => {
+        setModalMode(mode);
+        setModalOpen(true);
+    };
+
     return (
         <div className="landing-container">
+            <Toaster position="top-center" />
+
+            {/* Pass state to the Modal */}
+            <AuthModal
+                isOpen={isModalOpen}
+                onClose={() => setModalOpen(false)}
+                initialMode={modalMode}
+            />
+
             <nav className="landing-nav">
                 <div className="logo">AI Notes</div>
                 <div className="nav-links">
-                    <Link to="/register" className="btn btn-primary">Get Started</Link>
+                    <button onClick={() => openModal('login')} className="btn btn-outline">
+                        Login
+                    </button>
                 </div>
             </nav>
 
@@ -21,12 +43,10 @@ function Landing() {
                     Sync across devices and keep your mind clear.
                 </p>
                 <div className="hero-buttons">
-                    <Link to="/login" className="btn btn-outline btn-large">
-                        Login to Account
-                    </Link>
+                    <button onClick={() => openModal('register')} className="btn btn-primary btn-large">
+                        Get Started
+                    </button>
                 </div>
-
-                {/* Optional: Add a visual element or abstract shape here later */}
             </main>
         </div>
     );
