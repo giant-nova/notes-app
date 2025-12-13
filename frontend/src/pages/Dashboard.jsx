@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import '../App.css';
+import Swal from 'sweetalert2';
+import toast, { Toaster } from 'react-hot-toast';
+import { FaTrash, FaPencilAlt } from 'react-icons/fa';
 
 function Dashboard() {
     const [notes, setNotes] = useState([]);
@@ -12,6 +16,51 @@ function Dashboard() {
     useEffect(() => {
         fetchNotes();
     }, []);
+
+const handleEdit = async (note) => {
+        // Open SweetAlert Modal
+        const { value: formValues } = await Swal.fire({
+            title: 'Edit Note',
+            html: `
+                <input id="swal-input1" class="swal2-input" value="${note.title}" placeholder="Title">
+                <textarea id="swal-input2" class="swal2-textarea" placeholder="Content" style="height: 100px;">${note.content}</textarea>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonColor: '#6366f1',
+            confirmButtonText: 'Update',
+            preConfirm: () => {
+                return [
+                    document.getElementById('swal-input1').value,
+                    document.getElementById('swal-input2').value
+                ];
+            }
+        });
+
+        // If user clicked "Update"
+        if (formValues) {
+            const [newTitle, newContent] = formValues;
+
+            // Optimistic UI update (update list immediately)
+            // Or call API then update. Let's call API.
+            try {
+                // Assuming your backend supports PUT /notes/{id}
+                const response = await api.put(`/notes/${note.id}`, {
+                    title: newTitle,
+                    content: newContent
+                });
+
+                // Update local state
+                setNotes(notes.map(n => n.id === note.id ? response.data : n));
+
+                // Show Toastr Success Message
+                toast.success('Note updated successfully!');
+            } catch (error) {
+                console.error("Update failed", error);
+                toast.error('Failed to update note.');
+            }
+        }
+    };
 
     const fetchNotes = async () => {
             try {
@@ -50,15 +99,43 @@ function Dashboard() {
     };
 
     // 3. Delete a Note
-    const handleDelete = async (id) => {
-        try {
-            await api.delete(`/notes/${id}`);
-            // Remove from UI immediately without refreshing
-            setNotes(notes.filter(note => note.id !== id));
-        } catch (error) {
-            alert('Failed to delete note');
-        }
-    };
+    // --- NEW: DELETE FUNCTION WITH CONFIRMATION ---
+        const handleDelete = async (id) => {
+            // 1. Show Confirmation Dialog
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444', // Red color for danger
+                cancelButtonColor: '#6366f1', // Indigo for cancel
+                confirmButtonText: 'Yes, delete it!'
+            });
+
+            // 2. If User Confirmed
+            if (result.isConfirmed) {
+                try {
+                    // Call API
+                    await api.delete(`/notes/${id}`);
+
+                    // Remove from UI immediately
+                    setNotes(notes.filter(note => note.id !== id));
+
+                    // Show Success Toast
+                    toast.success('Note deleted successfully', {
+                        icon: '🗑️',
+                        style: {
+                            borderRadius: '10px',
+                            background: '#333',
+                            color: '#fff',
+                        },
+                    });
+                } catch (error) {
+                    console.error("Delete failed", error);
+                    toast.error('Failed to delete note.');
+                }
+            }
+        };
 
     // 4. Logout
     const handleLogout = async () => {
@@ -72,68 +149,95 @@ function Dashboard() {
     };
 
     return (
-        <div style={styles.container}>
-            <header style={styles.header}>
-                <h1>My Notes</h1>
-                <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
-            </header>
+            <div className="container">
+                <Toaster position="top-right" />
+                {/* Header stays full width */}
+                <header className="header">
+                    <h1>My Notes</h1>
+                    <button onClick={handleLogout} className="btn btn-danger">
+                        Logout
+                    </button>
+                </header>
 
-            {/* Create Note Form */}
-            <form onSubmit={handleAddNote} style={styles.form}>
-                <input
-                    type="text"
-                    placeholder="Title"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    style={styles.input}
-                />
-                <textarea
-                    placeholder="Content"
-                    value={content}
-                    onChange={e => setContent(e.target.value)}
-                    style={styles.textarea}
-                />
-                <button type="submit" style={styles.addBtn}>Add Note</button>
-            </form>
+                {/* Main Layout: 2 Columns */}
+                <div className="dashboard-layout">
 
-            {/* Notes Grid */}
-            <div style={styles.grid}>
-                {Array.isArray(notes) && notes.length > 0 ? (
-                    notes.map(note => (
-                        <div key={note.id} style={styles.card}>
-                            <h3>{note.title}</h3>
-                            <p>{note.content}</p>
-                            <small style={{ color: '#666' }}>
-                                Created: {new Date(note.createdAt).toLocaleDateString()}
-                            </small>
-                            <button
-                                onClick={() => handleDelete(note.id)}
-                                style={styles.deleteBtn}
-                            >
-                                Delete
+                    {/* Left Column: Editor */}
+                    <aside className="editor-section">
+                        <form onSubmit={handleAddNote} className="note-form">
+                            <h2 style={{margin: '0 0 1rem 0', fontSize: '1.2rem', color: 'var(--primary)'}}>
+                                Add New Note
+                            </h2>
+                            <input
+                                type="text"
+                                placeholder="Title"
+                                value={title}
+                                onChange={e => setTitle(e.target.value)}
+                                className="form-input"
+                                required
+                            />
+                            <textarea
+                                placeholder="Write your note here..."
+                                value={content}
+                                onChange={e => setContent(e.target.value)}
+                                className="form-textarea"
+                                style={{minHeight: '150px'}} // Make it taller
+                                required
+                            />
+                            <button type="submit" className="btn btn-primary" style={{width: '100%'}}>
+                                + Add Note
                             </button>
-                        </div>
-                    ))
-                ) : (
-                    <p>No notes found. Create one!</p>
-                )}
-            </div>
-        </div>
-    );
-}
+                        </form>
+                    </aside>
 
-// Basic CSS-in-JS for layout
-const styles = {
-    container: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-    logoutBtn: { padding: '8px 16px', background: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-    form: { display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '30px', padding: '20px', background: '#f8f9fa', borderRadius: '8px' },
-    input: { padding: '10px', fontSize: '16px' },
-    textarea: { padding: '10px', fontSize: '16px', minHeight: '80px' },
-    addBtn: { padding: '10px', background: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' },
-    card: { border: '1px solid #ddd', padding: '15px', borderRadius: '8px', background: 'white', position: 'relative' },
-    deleteBtn: { marginTop: '10px', padding: '5px 10px', background: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }
-};
+                    {/* Right Column: Scrollable List */}
+                    <main className="notes-section">
+                        {Array.isArray(notes) && notes.length > 0 ? (
+                            notes.slice().reverse().map(note => ( // reverse() shows newest first
+                                <div key={note.id} className="note-card">
+                                    <div>
+                                        <h3 className="note-title">{note.title}</h3>
+                                        <p className="note-content" style={{whiteSpace: 'pre-wrap'}}>
+                                            {/* pre-wrap preserves line breaks from the textarea */}
+                                            {note.content}
+                                        </p>
+                                    </div>
+
+                                    <div className="note-footer">
+                                        <small className="note-date">
+                                            {new Date(note.createdAt).toLocaleDateString(undefined, {
+                                                weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                            })}
+                                        </small>
+                                        <div className="note-actions">
+                                            <button
+                                                onClick={() => handleEdit(note)}
+                                                className="icon-btn edit-btn"
+                                                title="Edit Note"
+                                            >
+                                                <FaPencilAlt />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(note.id)}
+                                                className="icon-btn delete-btn"
+                                                title="Delete Note"
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{ textAlign: 'center', color: '#94a3b8', marginTop: '4rem' }}>
+                                <p>No notes found.</p>
+                                <p>Use the form on the left to create one!</p>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            </div>
+        );
+}
 
 export default Dashboard;
