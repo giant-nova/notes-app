@@ -24,14 +24,6 @@ public class AIService {
 
     public AIService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.baseUrl(HF_API_URL).build();
-        if (hfApiKey == null || hfApiKey.trim().isEmpty()) {
-            System.err.println("❌ HF Key: MISSING/NULL - Check application.properties!");
-        } else if (!hfApiKey.startsWith("hf_")) {
-            System.err.println("❌ HF Key: INVALID FORMAT (doesn't start with 'hf_')");
-        } else {
-            String prefix = hfApiKey.substring(0, Math.min(8, hfApiKey.length())) + "...";
-            System.out.println("✅ HF Key: LOADED (" + prefix + ")");
-        }
     }
 
     // Generate Embedding for a Note (Async)
@@ -40,9 +32,9 @@ public class AIService {
         fetchEmbedding(text).subscribe(embedding -> {
             if (!embedding.isEmpty() && embedding.size() == 384) {  // Validate full embedding
                 vectorIndex.put(note.getId(), embedding);
-                System.out.println("✅ Generated embedding for note: " + note.getId() + " (384 dims)");
+                System.out.println("Generated embedding for note: " + note.getId());
             } else {
-                System.err.println("❌ Skipped invalid/empty embedding for note: " + note.getId() + " (size: " + (embedding != null ? embedding.size() : "null") + ")");
+                System.err.println("Skipped invalid/empty embedding for note: " + note.getId() + " (size: " + (embedding != null ? embedding.size() : "null") + ")");
             }
         });
     }
@@ -114,7 +106,6 @@ public class AIService {
     // --- Helper: Call Hugging Face API ---
     private reactor.core.publisher.Mono<List<Double>> fetchEmbedding(String text) {
         if (hfApiKey == null || hfApiKey.trim().isEmpty()) {
-            System.err.println("❌ HF API key missing - skipping embedding");
             return reactor.core.publisher.Mono.just(new ArrayList<>());
         }
 
