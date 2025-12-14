@@ -11,11 +11,33 @@ function Dashboard() {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     // 1. Fetch notes when the page loads
     useEffect(() => {
         fetchNotes();
     }, []);
+
+const handleSearch = async (e) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) {
+            fetchNotes(); // Reset to all notes if empty
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            const response = await api.get(`/notes/search?query=${searchQuery}`);
+            setNotes(response.data);
+            toast.success(`Found ${response.data.length} relevant notes`);
+        } catch (error) {
+            console.error(error);
+            toast.error("Search failed");
+        } finally {
+            setIsSearching(false);
+        }
+    };
 
 const handleEdit = async (note) => {
         // Open SweetAlert Modal
@@ -192,6 +214,28 @@ const handleEdit = async (note) => {
 
                     {/* Right Column: Scrollable List */}
                     <main className="notes-section">
+                        <form onSubmit={handleSearch} style={{ marginBottom: '1.5rem', display: 'flex', gap: '10px' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search notes (e.g., 'Project ideas' or 'shopping list')..."
+                                                    value={searchQuery}
+                                                    onChange={e => setSearchQuery(e.target.value)}
+                                                    className="form-input"
+                                                    style={{ flex: 1 }}
+                                                />
+                                                <button type="submit" className="btn btn-primary" disabled={isSearching}>
+                                                    {isSearching ? 'Thinking...' : 'AI Search'}
+                                                </button>
+                                                {searchQuery && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-danger"
+                                                        onClick={() => { setSearchQuery(''); fetchNotes(); }}
+                                                    >
+                                                        Clear
+                                                    </button>
+                                                )}
+                                            </form>
                         {Array.isArray(notes) && notes.length > 0 ? (
                             notes.slice().reverse().map(note => ( // reverse() shows newest first
                                 <div key={note.id} className="note-card">
