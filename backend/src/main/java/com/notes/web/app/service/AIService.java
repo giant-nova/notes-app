@@ -11,8 +11,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class AIService {
-
-    // Revert to proven endpoint from curl
     private static final String HF_API_URL = "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction";
 
     @Value("${huggingface.api.key}")
@@ -20,13 +18,12 @@ public class AIService {
 
     private final WebClient webClient;
 
-    // In-Memory Vector Storage (Simulating a Vector DB for this assignment)
+    // In-Memory Vector Storage
     // Map<NoteID, EmbeddingVector>
     private final Map<Long, List<Double>> vectorIndex = new HashMap<>();
 
     public AIService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.baseUrl(HF_API_URL).build();
-        // Enhanced debug (as above)
         if (hfApiKey == null || hfApiKey.trim().isEmpty()) {
             System.err.println("❌ HF Key: MISSING/NULL - Check application.properties!");
         } else if (!hfApiKey.startsWith("hf_")) {
@@ -37,7 +34,7 @@ public class AIService {
         }
     }
 
-    // 1. Generate Embedding for a Note (Async)
+    // Generate Embedding for a Note (Async)
     public void generateAndStoreEmbedding(Note note) {
         String text = note.getTitle() + " " + note.getContent();
         fetchEmbedding(text).subscribe(embedding -> {
@@ -50,15 +47,12 @@ public class AIService {
         });
     }
 
-    // 2. Remove embedding if note is deleted
+    // Remove embedding if note is deleted
     public void removeEmbedding(Long noteId) {
         vectorIndex.remove(noteId);
     }
 
-    // 3. Search Method
-    // 3. Search Method (Hybrid: Semantic + Keyword, with Threshold & Limit)
     public List<Note> searchNotes(String query, List<Note> allNotes) {
-        // Keyword matching (always compute for hybrid boost)
         List<Note> keywordMatches = allNotes.stream()
                 .filter(n -> n.getTitle().toLowerCase().contains(query.toLowerCase())
                         || n.getContent().toLowerCase().contains(query.toLowerCase()))
@@ -67,12 +61,12 @@ public class AIService {
         // Semantic: Get query embedding
         List<Double> queryVector = fetchEmbedding(query).block();
         if (queryVector == null || queryVector.isEmpty()) {
-            System.err.println("⚠️ Semantic failed; using keywords only");
-            return keywordMatches;  // Fallback
+            System.err.println("Semantic failed; using keywords only");
+            return keywordMatches;
         }
 
         if (vectorIndex.isEmpty()) {
-            System.err.println("⚠️ No stored embeddings; using keywords only");
+            System.err.println("No stored embeddings; using keywords only");
             return keywordMatches;
         }
 
@@ -86,7 +80,7 @@ public class AIService {
             }
         }
 
-        // FIXED: Filter threshold (>0.2 for "relevant") + sort descending + top 5 limit
+        // Filter threshold (>0.2 for "relevant") + sort descending + top 5 limit
         // Boost keywords: Add 0.1 bonus if keyword match
         List<Note> semanticResults = scores.entrySet().stream()
                 .filter(entry -> entry.getValue() > 0.2)  // Threshold: Tune this (test with known queries)

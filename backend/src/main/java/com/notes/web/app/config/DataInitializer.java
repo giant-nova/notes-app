@@ -21,7 +21,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println("--- 🧠 AI Initialization Started ---");
+        System.out.println("--- AI Initialization Started ---");
 
         List<Note> allNotes = noteRepository.findAll();
         System.out.println("Found " + allNotes.size() + " notes in database. Generating embeddings...");
@@ -30,10 +30,10 @@ public class DataInitializer implements CommandLineRunner {
             // Generate embedding for each note
             aiService.generateAndStoreEmbedding(note);
 
-            // Wait a bit to avoid hitting API rate limits (Hugging Face Free Tier)
+            // Wait a bit to avoid hitting API rate limits
             Thread.sleep(500);
         }
 
-        System.out.println("--- ✅ AI Initialization Complete. Brain is ready! ---");
+        System.out.println("--- AI Initialization Complete. Semantic search is ready! ---");
     }
 }

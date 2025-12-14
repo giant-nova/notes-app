@@ -11,23 +11,22 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 1. Handle Security/Login Errors
+    // Handle Security/Login Errors
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
         ErrorResponse error = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Invalid username or password");
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
-    // 2. Handle Database Errors (like the one you just saw)
+    // Handle Database Errors
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<ErrorResponse> handleDatabaseErrors(DataAccessException ex) {
-        // We log the real error for the developer, but show a safe message to the user
         System.err.println("Database Error: " + ex.getMessage());
         ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "A database error occurred. Please try again later.");
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // 3. Handle Generic Runtime Errors (Catch-all)
+    // Handle Generic Runtime Errors
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
         System.err.println("Unknown Error: " + ex.getMessage());

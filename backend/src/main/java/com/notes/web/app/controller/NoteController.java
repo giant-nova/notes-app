@@ -6,7 +6,6 @@ import com.notes.web.app.repository.UserRepository;
 import com.notes.web.app.service.NoteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,9 +15,8 @@ import java.util.List;
 public class NoteController {
 
     private final NoteService noteService;
-    private final UserRepository userRepository; // <--- Add this
+    private final UserRepository userRepository;
 
-    // Add UserRepository to the constructor
     public NoteController(NoteService noteService, UserRepository userRepository) {
         this.noteService = noteService;
         this.userRepository = userRepository;
@@ -26,10 +24,10 @@ public class NoteController {
 
     @GetMapping
     public List<Note> getAllNotes() {
-        // 1. Get the username of the person currently logged in
+        // Get the username of the person currently logged in
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // 2. Return ONLY their notes
+        // Return ONLY their notes
         return noteService.getNotesForUser(username);
     }
 
@@ -42,14 +40,14 @@ public class NoteController {
 
     @PostMapping
     public Note createNote(@RequestBody Note note) {
-        // 1. Get the username from the Security Context (Session)
+        // Get the username from the Security Context (Session)
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // 2. Find the full User entity from the database
+        // Find the full User entity from the database
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 3. Set the user on the note BEFORE saving
+        // Set the user on the note BEFORE saving
         note.setUser(user);
 
         return noteService.createNote(note);

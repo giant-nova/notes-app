@@ -8,6 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    // Spring generates the SQL for this automatically!
     Optional<User> findByUsername(String username);
 }

@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "app_users") // 'user' is a reserved keyword in Postgres!
+@Table(name = "app_users")
 public class User {
 
     @Id
@@ -28,7 +28,6 @@ public class User {
     @JsonIgnore
     private List<Note> notes;
 
-    // --- Getters and Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }

@@ -34,7 +34,7 @@ public class AuthController {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("Username already exists");
         }
-        // Hash the password before saving!
+        // Hash the password before saving
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return ResponseEntity.ok("User registered successfully");
@@ -46,15 +46,15 @@ public class AuthController {
         String password = loginRequest.get("password");
 
         try {
-            // 1. Try to authenticate
+            // Try to authenticate
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password)
             );
 
-            // 2. If successful, store auth in the SecurityContext
+            // If successful, store auth in the SecurityContext
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // 3. Create a session (this automatically sets the JSESSIONID cookie)
+            // Create a session (this automatically sets the JSESSIONID cookie)
             HttpSession session = request.getSession(true);
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
@@ -68,7 +68,7 @@ public class AuthController {
     public ResponseEntity<?> logout(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {
-            session.invalidate(); // Destroy session
+            session.invalidate();
         }
         return ResponseEntity.ok("Logged out");
     }

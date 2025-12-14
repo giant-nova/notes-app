@@ -21,7 +21,6 @@ public class Note {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Automatically set timestamps
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -38,7 +37,6 @@ public class Note {
     @JsonIgnore
     private User user;
 
-    // --- Getters and Setters (Generate these in IntelliJ: Alt+Insert) ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
