@@ -69,4 +69,10 @@ public class NoteController {
         noteService.deleteNote(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/search")
+    public List<Note> searchNotes(@RequestParam String query) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return noteService.searchNotes(query, username);
+    }
 }

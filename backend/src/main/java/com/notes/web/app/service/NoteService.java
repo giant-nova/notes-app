@@ -12,9 +12,11 @@ public class NoteService {
 
     private final NoteRepository noteRepository;
 
+    private final AIService aiService;
     // Constructor Injection (Better than @Autowired)
-    public NoteService(NoteRepository noteRepository) {
+    public NoteService(NoteRepository noteRepository, AIService aiService) {
         this.noteRepository = noteRepository;
+        this.aiService = aiService;
     }
 
     public List<Note> getAllNotes() {
@@ -22,6 +24,8 @@ public class NoteService {
     }
 
     public Note createNote(Note note) {
+        Note saved = noteRepository.save(note);
+        aiService.generateAndStoreEmbedding(saved);
         return noteRepository.save(note);
     }
 
@@ -43,5 +47,10 @@ public class NoteService {
 
     public List<Note> getNotesForUser(String username) {
         return noteRepository.findByUserUsername(username);
+    }
+
+    public List<Note> searchNotes(String query, String username) {
+        List<Note> userNotes = noteRepository.findByUserUsername(username);
+        return aiService.searchNotes(query, userNotes);
     }
 }
